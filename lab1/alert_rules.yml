@@ -1,0 +1,19 @@
+## alert_rules.yml ##
+
+groups:  
+  - name: Jenkins 
+    rules:
+        # * RUNNING  -1 true  - The build had no errors.
+        # * SUCCESS   0 true  - The build had no errors.
+        # * UNSTABLE  1 true  - The build had some errors but they were not fatal. For example, some tests failed.
+        # * FAILURE   2 false - The build had a fatal error.
+        # * NOT_BUILT 3 false - The module was not built.
+        # * ABORTED   4 false - The build was manually aborted.
+        - alert: JenkinsLastBuildFailed
+          expr: default_jenkins_builds_last_build_result_ordinal == 2
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: Jenkins last build failed (instance {{ $labels.instance }})
+            description: "Last build failed: {{$labels.jenkins_job}}. Failed build for job `{{$labels.jenkins_job}}` on {{$labels.instance}}/{{$labels.env}} ({{$labels.region}})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
