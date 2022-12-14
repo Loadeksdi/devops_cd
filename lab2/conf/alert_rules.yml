@@ -1,0 +1,12 @@
+## alert_rules.yml ##
+
+groups:  
+- name: alert.rules
+  rules:
+  - alert: EndpointDown
+    expr: probe_success == 0
+    for: 10s
+    labels:
+      severity: "critical"
+    annotations:
+      summary: "Endpoint {{ $labels.instance }} down"
