@@ -1,3 +1,4 @@
 *.exe
 *.hcl
-*.tfstate*
+*.tfstate
+gitlab-self-hosted
