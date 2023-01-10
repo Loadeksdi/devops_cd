@@ -1,0 +1,32 @@
+version: '3.6'
+services:
+  web:
+    image: 'gitlab/gitlab-ee:latest'
+    restart: always
+    hostname: 'localhost'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost'
+    ports:
+      - '80:80'
+      - '443:443'
+      - '22:22'
+    volumes:
+      - './config:/etc/gitlab'
+      - './logs:/var/log/gitlab'
+      - './data:/var/opt/gitlab'
+    shm_size: '256m'
+  
+  jenkins:
+      image: jenkins_main
+      mem_limit: 1024m
+      privileged: true
+      user: root
+      ports:
+       - 8080:8080
+       - 50000:50000
+      container_name: jenkins
+      volumes:
+       - /home/root/jenkins_compose/jenkins_configuration:/var/jenkins_home
+       - /var/run/docker.sock:/var/run/docker.sock
+

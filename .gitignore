@@ -1,4 +1,8 @@
 *.exe
 *.hcl
 *.tfstate
-gitlab-self-hosted
+gitlab-self-hosted/config
+gitlab-self-hosted/data
+gitlab-self-hosted/logs
+gitlab-self-hosted/runner-config
+*node_modules*
