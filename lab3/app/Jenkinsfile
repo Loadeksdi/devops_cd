@@ -1,0 +1,86 @@
+pipeline {
+    environment {
+        app1 = ''
+        app2 = ''
+    }
+
+    agent any
+
+    tools {nodejs "node"}
+
+    stages {
+       stage('Test'){
+        steps {
+            echo 'Notify GitLab'
+            updateGitlabCommitStatus name: 'build', state: 'pending'
+            checkout scm
+            sh 'npm i'
+            sh 'npm test'
+        }
+       }
+       stage('Build'){
+        steps {
+            script {
+                app1 = docker.build("loadeksdee/myapp-pre:latest")
+                app2 = docker.build("loadeksdee/myapp-prod:latest")
+            }
+        }
+       }
+       stage('Push image') {
+        steps {
+            script {
+                docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                    app1.push()
+                    app2.push()
+                }
+            }
+        }
+       }
+       stage('Deploy preprod') {
+        steps {
+            script {
+                docker.image('loadeksdee/myapp-pre:latest').run('-p 3001:3000 --name "myapp-pre" --network=gitlab-self-hosted_default')
+            }
+        }        
+       }
+       stage('Test preprod deployment'){
+        steps {
+            script {
+                final String response = sh(script: "curl -s http://myapp-pre:3000", returnStdout: true)
+                if (response == 'Hello World') {
+                    echo 'Success'
+                } else {
+                    error('Unable to call the application')
+                }
+            }
+        }
+       }
+       stage('Deploy prod') {
+        steps {
+            script {
+                docker.image('loadeksdee/myapp-prod:latest').run('-p 3002:3000 --name "myapp-prod" --network=gitlab-self-hosted_default')
+            }
+        }        
+       }
+       stage('Test prod deployment'){
+        steps {
+            script {
+                final String response = sh(script: "curl -s http://myapp-prod:3000", returnStdout: true)
+                if (response == 'Hello World') {
+                    echo 'Success'
+                } else {
+                    error('Unable to call the application')
+                }
+            }
+        }
+       }
+    }
+    post {
+        failure {
+            updateGitlabCommitStatus name: 'build', state: 'failed'
+        }
+        success {
+            updateGitlabCommitStatus name: 'build', state: 'success'
+        }
+    }
+}
